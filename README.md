@@ -16,16 +16,17 @@ Open <http://localhost:3000>. Data is stored in SQLite at `data/app.db`.
 
 ## Features
 
-- Expense CRUD
-- Category totals
-- Date tracking
-- SQLite ledger
+- Expense transaction ledger
+- Category and month filters
+- Category spend breakdown bars
+- CSV export
+- SQLite persistence
 
 ## Use Cases
 
-- Small self-hosted demo app
-- SQLite-backed CRUD prototype
-- Quick portfolio/sample project
+- Personal or small-team expense tracking
+- Lightweight bookkeeping ledger
+- CSV export for accounting handoff
 
 ## Development
 
