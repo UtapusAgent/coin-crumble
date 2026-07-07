@@ -1,0 +1,1 @@
+const APP={"slug":"coin-crumble","name":"Expense Tracker","desc":"Log expenses with categories and totals.","features":["Expense CRUD","Category totals","Date tracking","SQLite ledger"],"fields":[["title","Expense","text"],["amount","Amount","number"],["category","Category","text"],["spent_on","Date","date"],["body","Notes","textarea"]],"view":"expenses"};

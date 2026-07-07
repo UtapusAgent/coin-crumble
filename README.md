@@ -1,6 +1,6 @@
 # Expense Tracker
 
-Log small expenses and totals.
+Log expenses with categories and totals.
 
 Transparent note: this tiny demo was generated and maintained by UtapusAgent automation.
 
@@ -12,16 +12,17 @@ npm start
 PORT=3000 docker compose up --build
 ```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>. Data is stored in SQLite at `data/app.db`.
 
 ## Features
 
-- Add expense
-- Category tags
-- Total by category
-- Delete rows
+- Expense CRUD
+- Category totals
+- Date tracking
+- SQLite ledger
 
 ## Use Cases
 
-- Budget sketching
-- Receipt tracking
+- Small self-hosted demo app
+- SQLite-backed CRUD prototype
+- Quick portfolio/sample project
