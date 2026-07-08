@@ -3,6 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 let expenses = [];
 let categoryFilter = "";
 let monthFilter = "";
+let editingId = null;
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -64,25 +65,26 @@ function totals(list) {
 function render() {
   const list = filteredExpenses();
   const summary = totals(list);
+  const editing = expenses.find((expense) => expense.id === editingId);
   $("#app").innerHTML = `
     <section class="expense-layout">
       <aside class="panel">
-        <h2>Add Expense</h2>
+        <h2>${editing ? "Edit Expense" : "Add Expense"}</h2>
         <form id="expenseForm">
           <label>Description</label>
-          <input id="title" required placeholder="Coffee, hosting, train ticket">
+          <input id="title" required placeholder="Coffee, hosting, train ticket" value="${escapeHtml(editing?.title || "")}">
           <label>Amount</label>
-          <input id="amount" type="number" min="0" step="0.01" required>
+          <input id="amount" type="number" min="0" step="0.01" required value="${escapeHtml(editing ? amount(editing) : "")}">
           <label>Category</label>
-          <input id="category" list="categoryOptions" placeholder="Food, SaaS, Travel">
+          <input id="category" list="categoryOptions" placeholder="Food, SaaS, Travel" value="${escapeHtml(editing?.meta?.category || "")}">
           <datalist id="categoryOptions">
             ${categories().map((category) => `<option value="${escapeHtml(category)}">`).join("")}
           </datalist>
           <label>Date</label>
-          <input id="spent_on" type="date" required>
+          <input id="spent_on" type="date" required value="${escapeHtml(editing?.meta?.spent_on || "")}">
           <label>Notes</label>
-          <textarea id="body" placeholder="Receipt notes, invoice number, vendor..."></textarea>
-          <button>Save expense</button>
+          <textarea id="body" placeholder="Receipt notes, invoice number, vendor...">${escapeHtml(editing?.body || "")}</textarea>
+          <div class="row"><button>${editing ? "Save changes" : "Save expense"}</button>${editing ? `<button type="button" class="ghost" id="cancelEdit">Cancel</button>` : ""}</div>
         </form>
       </aside>
       <section>
@@ -122,7 +124,7 @@ function render() {
                   <td><strong>${escapeHtml(expense.title)}</strong><br><span class="muted">${escapeHtml(expense.body)}</span></td>
                   <td>${escapeHtml(expense.meta?.category || "Uncategorized")}</td>
                   <td class="right">${currency(amount(expense))}</td>
-                  <td><button class="danger" onclick="deleteExpense(${expense.id})">Delete</button></td>
+                  <td><button class="ghost" onclick="editExpense(${expense.id})">Edit</button><button class="danger" onclick="deleteExpense(${expense.id})">Delete</button></td>
                 </tr>
               `).join("") || `<tr><td colspan="5" class="muted">No expenses yet.</td></tr>`}
             </tbody>
@@ -135,7 +137,7 @@ function render() {
 }
 
 function bindEvents() {
-  $("#spent_on").value = new Date().toISOString().slice(0, 10);
+  if (!editingId) $("#spent_on").value = new Date().toISOString().slice(0, 10);
   $("#expenseForm").addEventListener("submit", saveExpense);
   $("#monthFilter").addEventListener("change", (event) => {
     monthFilter = event.target.value;
@@ -146,13 +148,13 @@ function bindEvents() {
     render();
   });
   $("#csvExport").addEventListener("click", exportCsv);
+  const cancel = $("#cancelEdit");
+  if (cancel) cancel.addEventListener("click", () => { editingId = null; render(); });
 }
 
 async function saveExpense(event) {
   event.preventDefault();
-  await api("/api/items", {
-    method: "POST",
-    body: JSON.stringify({
+  const payload = {
       title: $("#title").value.trim(),
       body: $("#body").value.trim(),
       status: "posted",
@@ -161,9 +163,23 @@ async function saveExpense(event) {
         category: $("#category").value.trim() || "Uncategorized",
         spent_on: $("#spent_on").value,
       },
-    }),
-  });
+    };
+  if (editingId) {
+    const old = expenses.find((expense) => expense.id === editingId);
+    await api(`/api/items/${editingId}`, { method: "PUT", body: JSON.stringify({ ...old, ...payload, id: editingId }) });
+    editingId = null;
+  } else {
+    await api("/api/items", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    });
+  }
   await loadExpenses();
+}
+
+function editExpense(id) {
+  editingId = id;
+  render();
 }
 
 async function deleteExpense(id) {
@@ -208,4 +224,5 @@ document.body.innerHTML = `
 `;
 
 loadExpenses();
+window.editExpense = editExpense;
 window.deleteExpense = deleteExpense;
